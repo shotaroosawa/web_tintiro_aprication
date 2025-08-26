@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>チンチロアプリ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>チンチロアプリ</h1>
+        <div class="game-area">
+            <div>
+                <h2>プレイヤー1</h2>
+                <p>ポイント: <span id="player1-points">{{ player1_points }}</span></p>
+                <div class="dice-container" id="dice-p1-container">
+                    <!-- 初期表示用のサイコロ画像 -->
+                    <img src="{{ url_for('static', filename='images/saikoro.png') }}" alt="サイコロ" class="initial-dice">
+                </div>
+                <p id="message-p1">{{ message_p1 }}</p>
+                <p id="result-p1" style="color: red; font-weight: bold;">{{ result_p1 }}</p>
+            </div>
+            <hr>
+            <div>
+                <h2>プレイヤー2</h2>
+                <p>ポイント: <span id="player2-points">{{ player2_points }}</span></p>
+                <div class="dice-container" id="dice-p2-container">
+                    <!-- 初期表示用のサイコロ画像 -->
+                    <img src="{{ url_for('static', filename='images/saikoro.png') }}" alt="サイコロ" class="initial-dice">
+                </div>
+                <p id="message-p2">{{ message_p2 }}</p>
+                <p id="result-p2" style="color: blue; font-weight: bold;">{{ result_p2 }}</p>
+            </div>
+        </div>
+        <hr>
+        <div class="control-area">
+            <input type="number" id="bet-input" placeholder="賭け金を入力" value="100">
+            <button id="roll-button">サイコロを振る</button>
+        </div>
+    </div>
+
+    <!-- 動画カットイン用コンテナ -->
+    <div id="cutinVideoOverlay">
+        <video id="chinchirorinCutin" width="auto" height="auto" preload="auto" muted>
+            <source src="{{ url_for('static', filename='videos/チンチロリンカットイン.mp4') }}" type="video/mp4">
+            お使いのブラウザは動画タグをサポートしていません。
+        </video>
+    </div>
+    
+    <!-- サウンドファイルの読み込み -->
+    <audio id="saikoroSound" src="{{ url_for('static', filename='sounds/saikoro.mp3') }}" preload="auto"></audio>
+
+    <script>
+        document.getElementById("roll-button").addEventListener("click", function() {
+            var saikoroSound = document.getElementById("saikoroSound");
+            var cutinVideo = document.getElementById("chinchirorinCutin");
+            var cutinOverlay = document.getElementById("cutinVideoOverlay");
+
+            // 音声と動画を同時に再生
+            saikoroSound.currentTime = 0; // 再生位置をリセット
+            saikoroSound.play();
+
+            cutinOverlay.style.display = 'flex'; // オーバーレイを表示
+            cutinVideo.currentTime = 0; // 動画の再生位置をリセット
+            cutinVideo.play(); // 動画を再生
+
+            // 動画の再生終了イベント
+            cutinVideo.onended = function() {
+                cutinOverlay.style.display = 'none'; // 動画終了後、オーバーレイを非表示に
+
+                // 非同期通信を開始してサイコロの結果を取得
+                var bet = document.getElementById('bet-input').value;
+                fetch("/roll_dice_ajax", { // Ajax用のエンドポイント
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ bet: parseInt(bet) })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Player 1のサイコロと結果を更新
+                    var diceP1Container = document.getElementById("dice-p1-container");
+                    diceP1Container.innerHTML = ''; // 古いサイコロ画像をクリア
+                    data.dice_p1.forEach(dice => {
+                        var img = document.createElement("img");
+                        img.src = "{{ url_for('static', filename='images/dice_') }}" + dice + ".png";
+                        img.alt = "サイコロの目: " + dice;
+                        diceP1Container.appendChild(img);
+                    });
+                    document.getElementById("message-p1").innerText = data.message_p1;
+                    document.getElementById("result-p1").innerText = data.result_p1;
+                    document.getElementById("player1-points").innerText = data.player1_points;
+                    
+                    // Player 2のサイコロと結果を更新
+                    var diceP2Container = document.getElementById("dice-p2-container");
+                    diceP2Container.innerHTML = ''; // 古いサイコロ画像をクリア
+                    data.dice_p2.forEach(dice => {
+                        var img = document.createElement("img");
+                        img.src = "{{ url_for('static', filename='images/dice_') }}" + dice + ".png";
+                        img.alt = "サイコロの目: " + dice;
+                        diceP2Container.appendChild(img);
+                    });
+                    document.getElementById("message-p2").innerText = data.message_p2;
+                    document.getElementById("result-p2").innerText = data.result_p2;
+                    document.getElementById("player2-points").innerText = data.player2_points;
+                });
+            };
+        });
+    </script>
+</body>
+</html>

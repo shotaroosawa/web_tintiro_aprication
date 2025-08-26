@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>チンチロアプリ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="container" style="padding-top: 100px; text-align: center;">
+        <h1>チンチロアプリ</h1>
+        <img src="{{ url_for('static', filename='images/saikoro.png') }}" alt="サイコロの画像"
+            style="width: 200px; margin: 20px 0;">
+        <p>サイコロを振って勝負しよう！</p>
+        <a href="{{ url_for('game_page') }}" style="text-decoration: none;">
+            <button style="width: 250px; height: 80px; font-size: 24px;">ゲーム開始</button>
+        </a>
+    </div>
+</body>
+
+</html>
